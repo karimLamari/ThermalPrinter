@@ -1,0 +1,16 @@
+[Unit]
+Description=BimiPrint - Service d'impression WiFi
+After=network.target NetworkManager.service
+Wants=NetworkManager.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/home/bimi/bimiprint
+ExecStart=/usr/bin/node /home/bimi/bimiprint/src/index.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+
+[Install]
+WantedBy=multi-user.target

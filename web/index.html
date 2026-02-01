@@ -1,0 +1,817 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BimiPrint - Configuration</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .container {
+      max-width: 500px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    h1 {
+      color: #333;
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .subtitle {
+      color: #666;
+      font-size: 13px;
+    }
+    .section {
+      margin-bottom: 20px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .section:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+    .section h2 {
+      font-size: 14px;
+      color: #667eea;
+      margin-bottom: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+      color: #444;
+      font-size: 13px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 14px;
+      margin-bottom: 12px;
+      transition: all 0.2s ease;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    .checkbox-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .checkbox-row input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+    .checkbox-row label {
+      margin: 0;
+      font-weight: normal;
+    }
+    button {
+      width: 100%;
+      padding: 12px 16px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    button:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    button:disabled {
+      background: #ccc;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .btn-secondary {
+      background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+      margin-top: 8px;
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+      margin-top: 8px;
+    }
+    .btn-small {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+    .status {
+      text-align: center;
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      font-weight: 500;
+      font-size: 13px;
+    }
+    .status.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .status.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .status.info {
+      background: #cce5ff;
+      color: #004085;
+      border: 1px solid #b8daff;
+    }
+    .status.warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+    }
+    .hidden { display: none; }
+
+    /* Liste des réseaux WiFi */
+    .network-list {
+      max-height: 250px;
+      overflow-y: auto;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: white;
+    }
+    .network-item {
+      padding: 12px 14px;
+      border-bottom: 1px solid #f0f0f0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .network-item:hover {
+      background: #f8f9fa;
+    }
+    .network-item:last-child { border-bottom: none; }
+    .network-item.selected {
+      background: #e8f0fe;
+      border-left: 3px solid #667eea;
+    }
+    .network-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .network-name {
+      font-weight: 500;
+      color: #333;
+    }
+    .network-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #666;
+    }
+    .signal-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 1px;
+      height: 14px;
+    }
+    .signal-bar {
+      width: 3px;
+      background: #ddd;
+      border-radius: 1px;
+    }
+    .signal-bar.active { background: #667eea; }
+    .signal-bar:nth-child(1) { height: 4px; }
+    .signal-bar:nth-child(2) { height: 7px; }
+    .signal-bar:nth-child(3) { height: 10px; }
+    .signal-bar:nth-child(4) { height: 14px; }
+    .security-badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: #e9ecef;
+      color: #495057;
+    }
+    .security-badge.open {
+      background: #fff3cd;
+      color: #856404;
+    }
+
+    /* Logs */
+    .logs-container {
+      max-height: 200px;
+      overflow-y: auto;
+      background: #1e1e1e;
+      border-radius: 8px;
+      padding: 12px;
+      font-family: 'Courier New', monospace;
+      font-size: 11px;
+      color: #00ff00;
+      white-space: pre-wrap;
+      margin-bottom: 12px;
+    }
+
+    /* Status WiFi */
+    .wifi-status {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 16px;
+    }
+    .wifi-status-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 0;
+      font-size: 13px;
+    }
+    .wifi-status-label { color: #666; }
+    .wifi-status-value { font-weight: 500; color: #333; }
+    .wifi-status-value.ok { color: #28a745; }
+    .wifi-status-value.error { color: #dc3545; }
+
+    /* Diagnostic */
+    .diagnostic-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .diagnostic-item {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 12px;
+      text-align: center;
+    }
+    .diagnostic-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+    .diagnostic-label {
+      font-size: 11px;
+      color: #666;
+    }
+    .diagnostic-value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #f3f3f3;
+      border-top: 2px solid #667eea;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Collapsible */
+    .collapsible-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      padding: 8px 0;
+    }
+    .collapsible-header:hover { opacity: 0.8; }
+    .collapsible-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .collapsible-content.open {
+      max-height: 500px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>BimiPrint</h1>
+      <p class="subtitle">Configuration du système d'impression</p>
+    </div>
+
+    <!-- Statut WiFi actuel -->
+    <div id="wifiStatus" class="wifi-status">
+      <div class="wifi-status-row">
+        <span class="wifi-status-label">WiFi</span>
+        <span id="statusWifi" class="wifi-status-value">Chargement...</span>
+      </div>
+      <div class="wifi-status-row">
+        <span class="wifi-status-label">Internet</span>
+        <span id="statusInternet" class="wifi-status-value">Chargement...</span>
+      </div>
+    </div>
+
+    <div id="status" class="status hidden"></div>
+
+    <form id="configForm">
+      <!-- WiFi -->
+      <div class="section">
+        <h2>Connexion WiFi</h2>
+
+        <button type="button" class="btn-secondary" onclick="scanNetworks()">
+          Scanner les réseaux WiFi
+        </button>
+
+        <div id="networkList" class="network-list hidden"></div>
+
+        <label style="margin-top: 12px">Nom du réseau (SSID)</label>
+        <input type="text" id="wifiSSID" placeholder="Sélectionnez ou saisissez le réseau" required>
+
+        <div id="passwordSection">
+          <label>Mot de passe WiFi</label>
+          <input type="password" id="wifiPassword" placeholder="Mot de passe (vide si réseau ouvert)">
+        </div>
+
+        <div class="checkbox-row">
+          <input type="checkbox" id="openNetwork" onchange="togglePassword()">
+          <label for="openNetwork">Réseau sans mot de passe (WiFi ouvert)</label>
+        </div>
+      </div>
+
+      <!-- Restaurant -->
+      <div class="section">
+        <h2>Identification</h2>
+        <label>Code Restaurant</label>
+        <input type="text" id="restaurantCode" placeholder="Ex: BIMI" required>
+      </div>
+
+      <!-- Imprimante -->
+      <div class="section">
+        <h2>Imprimante (Optionnel)</h2>
+        <label>Type de connexion</label>
+        <select id="printerType" onchange="togglePrinterConfig()">
+          <option value="">-- Configurer plus tard --</option>
+          <option value="wifi">WiFi / Réseau</option>
+          <option value="bluetooth">Bluetooth</option>
+        </select>
+
+        <div id="wifiPrinterConfig" class="hidden">
+          <label>Adresse IP de l'imprimante</label>
+          <input type="text" id="printerIP" placeholder="Ex: 192.168.1.100">
+          <button type="button" class="btn-secondary btn-small" onclick="testPrinter()">Tester</button>
+        </div>
+
+        <div id="bluetoothConfig" class="hidden">
+          <label>Appareil Bluetooth</label>
+          <select id="bluetoothDevice">
+            <option value="">-- Scanner les appareils --</option>
+          </select>
+          <button type="button" class="btn-secondary btn-small" onclick="scanBluetooth()">Scanner</button>
+        </div>
+      </div>
+
+      <button type="submit" id="submitBtn">Enregistrer et Connecter</button>
+    </form>
+
+    <!-- Administration -->
+    <div class="section" style="margin-top: 20px;">
+      <div class="collapsible-header" onclick="toggleAdmin()">
+        <h2 style="margin: 0;">Administration</h2>
+        <span id="adminToggle">▼</span>
+      </div>
+
+      <div id="adminContent" class="collapsible-content">
+        <button type="button" class="btn-secondary" onclick="showDiagnostic()">Diagnostic</button>
+
+        <div id="diagnosticResult" class="hidden" style="margin-top: 12px;">
+          <div class="diagnostic-grid">
+            <div class="diagnostic-item">
+              <div class="diagnostic-icon" id="diagWifiIcon">⏳</div>
+              <div class="diagnostic-label">WiFi</div>
+              <div class="diagnostic-value" id="diagWifi">-</div>
+            </div>
+            <div class="diagnostic-item">
+              <div class="diagnostic-icon" id="diagInternetIcon">⏳</div>
+              <div class="diagnostic-label">Internet</div>
+              <div class="diagnostic-value" id="diagInternet">-</div>
+            </div>
+          </div>
+        </div>
+
+        <button type="button" class="btn-secondary" onclick="showLogs()">Voir les logs</button>
+        <div id="logsContainer" class="logs-container hidden"></div>
+
+        <button type="button" class="btn-secondary" onclick="showConnections()">Connexions enregistrées</button>
+        <div id="connectionsContainer" class="hidden" style="margin-top: 8px;"></div>
+
+        <button type="button" class="btn-danger" onclick="resetToAP()">Réinitialiser</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ════════════════════════════════════════
+    // Initialisation
+    // ════════════════════════════════════════
+
+    document.addEventListener('DOMContentLoaded', () => {
+      loadConfig();
+      loadWifiStatus();
+      // Refresh status every 10 seconds
+      setInterval(loadWifiStatus, 10000);
+    });
+
+    // ════════════════════════════════════════
+    // Status et Config
+    // ════════════════════════════════════════
+
+    async function loadWifiStatus() {
+      try {
+        const res = await fetch('/api/wifi/status');
+        const status = await res.json();
+
+        const wifiEl = document.getElementById('statusWifi');
+        const internetEl = document.getElementById('statusInternet');
+
+        if (status.connected) {
+          wifiEl.textContent = status.ssid;
+          wifiEl.className = 'wifi-status-value ok';
+        } else {
+          wifiEl.textContent = 'Non connecté';
+          wifiEl.className = 'wifi-status-value error';
+        }
+
+        if (status.internet) {
+          internetEl.textContent = 'OK';
+          internetEl.className = 'wifi-status-value ok';
+        } else {
+          internetEl.textContent = 'Non disponible';
+          internetEl.className = 'wifi-status-value error';
+        }
+      } catch (err) {
+        console.error('Erreur status:', err);
+      }
+    }
+
+    async function loadConfig() {
+      try {
+        const res = await fetch('/api/config');
+        const config = await res.json();
+
+        if (config.wifiSSID) document.getElementById('wifiSSID').value = config.wifiSSID;
+        if (config.restaurantCode) document.getElementById('restaurantCode').value = config.restaurantCode;
+        if (config.printerType) {
+          document.getElementById('printerType').value = config.printerType;
+          togglePrinterConfig();
+          if (config.printerType === 'wifi' && config.printerAddress) {
+            document.getElementById('printerIP').value = config.printerAddress;
+          }
+        }
+      } catch (err) {
+        console.error('Erreur chargement config:', err);
+      }
+    }
+
+    // ════════════════════════════════════════
+    // UI Helpers
+    // ════════════════════════════════════════
+
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.textContent = message;
+      statusDiv.className = `status ${type}`;
+      statusDiv.classList.remove('hidden');
+
+      if (type === 'success') {
+        setTimeout(() => statusDiv.classList.add('hidden'), 5000);
+      }
+    }
+
+    function hideStatus() {
+      document.getElementById('status').classList.add('hidden');
+    }
+
+    function togglePassword() {
+      const isOpen = document.getElementById('openNetwork').checked;
+      const section = document.getElementById('passwordSection');
+      section.style.display = isOpen ? 'none' : 'block';
+      if (isOpen) {
+        document.getElementById('wifiPassword').value = '';
+      }
+    }
+
+    function togglePrinterConfig() {
+      const type = document.getElementById('printerType').value;
+      document.getElementById('wifiPrinterConfig').classList.toggle('hidden', type !== 'wifi');
+      document.getElementById('bluetoothConfig').classList.toggle('hidden', type !== 'bluetooth');
+    }
+
+    function toggleAdmin() {
+      const content = document.getElementById('adminContent');
+      const toggle = document.getElementById('adminToggle');
+      content.classList.toggle('open');
+      toggle.textContent = content.classList.contains('open') ? '▲' : '▼';
+    }
+
+    // ════════════════════════════════════════
+    // WiFi Scan
+    // ════════════════════════════════════════
+
+    async function scanNetworks() {
+      showStatus('Scan des réseaux WiFi en cours...', 'info');
+
+      try {
+        const res = await fetch('/api/networks');
+        const networks = await res.json();
+
+        const list = document.getElementById('networkList');
+
+        if (networks.length === 0) {
+          list.innerHTML = '<div style="padding: 12px; text-align: center; color: #666;">Aucun réseau trouvé</div>';
+        } else {
+          list.innerHTML = networks.map(n => `
+            <div class="network-item" onclick="selectNetwork('${n.ssid}', '${n.security}')">
+              <div class="network-info">
+                ${getSignalBars(n.signal)}
+                <span class="network-name">${n.ssid}</span>
+              </div>
+              <div class="network-meta">
+                <span class="security-badge ${n.security === '' || n.security === 'open' ? 'open' : ''}">${n.security || 'Ouvert'}</span>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        list.classList.remove('hidden');
+        hideStatus();
+      } catch (err) {
+        showStatus('Erreur lors du scan WiFi', 'error');
+      }
+    }
+
+    function getSignalBars(signal) {
+      const bars = [
+        signal >= 20,
+        signal >= 40,
+        signal >= 60,
+        signal >= 80
+      ];
+
+      return `
+        <div class="signal-bars">
+          ${bars.map(active => `<div class="signal-bar ${active ? 'active' : ''}"></div>`).join('')}
+        </div>
+      `;
+    }
+
+    function selectNetwork(ssid, security) {
+      document.getElementById('wifiSSID').value = ssid;
+
+      // Si réseau ouvert, cocher la case
+      const isOpen = security === '' || security === 'open' || security === '--';
+      document.getElementById('openNetwork').checked = isOpen;
+      togglePassword();
+
+      // Highlight selected
+      document.querySelectorAll('.network-item').forEach(item => {
+        item.classList.remove('selected');
+        if (item.querySelector('.network-name').textContent === ssid) {
+          item.classList.add('selected');
+        }
+      });
+    }
+
+    // ════════════════════════════════════════
+    // Form Submit
+    // ════════════════════════════════════════
+
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      const btn = document.getElementById('submitBtn');
+      btn.disabled = true;
+      btn.innerHTML = 'Connexion en cours...<span class="spinner"></span>';
+
+      const printerType = document.getElementById('printerType').value;
+      let printerAddress = '';
+      if (printerType === 'wifi') {
+        printerAddress = document.getElementById('printerIP').value;
+      } else if (printerType === 'bluetooth') {
+        printerAddress = document.getElementById('bluetoothDevice').value;
+      }
+
+      const config = {
+        wifiSSID: document.getElementById('wifiSSID').value,
+        wifiPassword: document.getElementById('openNetwork').checked ? '' : document.getElementById('wifiPassword').value,
+        restaurantCode: document.getElementById('restaurantCode').value,
+        printerType,
+        printerAddress
+      };
+
+      try {
+        const res = await fetch('/api/config', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(config)
+        });
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus('Configuration enregistrée! Redémarrage...', 'success');
+          btn.innerHTML = 'Redémarrage...';
+        } else {
+          showStatus(data.error + (data.details ? `: ${data.details}` : ''), 'error');
+          btn.disabled = false;
+          btn.innerHTML = 'Enregistrer et Connecter';
+        }
+      } catch (err) {
+        showStatus('Erreur de connexion au serveur', 'error');
+        btn.disabled = false;
+        btn.innerHTML = 'Enregistrer et Connecter';
+      }
+    });
+
+    // ════════════════════════════════════════
+    // Printer
+    // ════════════════════════════════════════
+
+    async function testPrinter() {
+      const ip = document.getElementById('printerIP').value;
+      if (!ip) {
+        showStatus('Entrez une adresse IP', 'warning');
+        return;
+      }
+
+      showStatus('Test de l\'imprimante...', 'info');
+
+      try {
+        const res = await fetch('/api/test-printer', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ip })
+        });
+        const data = await res.json();
+        showStatus(data.success ? 'Imprimante accessible!' : 'Imprimante non accessible', data.success ? 'success' : 'error');
+      } catch (err) {
+        showStatus('Erreur test imprimante', 'error');
+      }
+    }
+
+    async function scanBluetooth() {
+      showStatus('Scan Bluetooth...', 'info');
+
+      try {
+        const res = await fetch('/api/bluetooth');
+        const devices = await res.json();
+
+        const select = document.getElementById('bluetoothDevice');
+        select.innerHTML = '<option value="">-- Sélectionner --</option>' +
+          devices.map(d => `<option value="${d.mac}">${d.name} (${d.mac})</option>`).join('');
+        hideStatus();
+      } catch (err) {
+        showStatus('Erreur scan Bluetooth', 'error');
+      }
+    }
+
+    // ════════════════════════════════════════
+    // Administration
+    // ════════════════════════════════════════
+
+    async function showDiagnostic() {
+      const container = document.getElementById('diagnosticResult');
+      container.classList.remove('hidden');
+
+      // Reset
+      ['diagWifi', 'diagInternet'].forEach(id => {
+        document.getElementById(id).textContent = '...';
+        document.getElementById(id + 'Icon').textContent = '⏳';
+      });
+
+      try {
+        const res = await fetch('/api/diagnostic');
+        const diag = await res.json();
+
+        // WiFi
+        document.getElementById('diagWifi').textContent = diag.wifi.connected ? diag.wifi.ssid : 'Non';
+        document.getElementById('diagWifiIcon').textContent = diag.wifi.connected ? '✅' : '❌';
+
+        // Internet
+        document.getElementById('diagInternet').textContent = diag.internet.ok ? `${diag.internet.latency}ms` : 'Non';
+        document.getElementById('diagInternetIcon').textContent = diag.internet.ok ? '✅' : '❌';
+
+      } catch (err) {
+        showStatus('Erreur diagnostic', 'error');
+      }
+    }
+
+    async function showLogs() {
+      const container = document.getElementById('logsContainer');
+
+      if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      showStatus('Chargement des logs...', 'info');
+
+      try {
+        const res = await fetch('/api/logs');
+        const data = await res.json();
+        container.textContent = data.logs;
+        container.classList.remove('hidden');
+        hideStatus();
+      } catch (err) {
+        showStatus('Erreur chargement logs', 'error');
+      }
+    }
+
+    async function showConnections() {
+      const container = document.getElementById('connectionsContainer');
+
+      if (!container.classList.contains('hidden')) {
+        container.classList.add('hidden');
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/wifi/connections');
+        const connections = await res.json();
+
+        if (connections.length === 0) {
+          container.innerHTML = '<div style="padding: 8px; color: #666; font-size: 13px;">Aucune connexion enregistrée</div>';
+        } else {
+          container.innerHTML = connections.map(c => `
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 4px;">
+              <span style="font-size: 13px;">${c}</span>
+              <button class="btn-danger btn-small" style="width: auto; margin: 0; padding: 4px 8px;" onclick="deleteConnection('${c}')">Supprimer</button>
+            </div>
+          `).join('');
+        }
+
+        container.classList.remove('hidden');
+      } catch (err) {
+        showStatus('Erreur chargement connexions', 'error');
+      }
+    }
+
+    async function deleteConnection(name) {
+      if (!confirm(`Supprimer la connexion "${name}" ?`)) return;
+
+      try {
+        await fetch(`/api/wifi/connections/${encodeURIComponent(name)}`, { method: 'DELETE' });
+        showStatus(`Connexion "${name}" supprimée`, 'success');
+        showConnections(); // Refresh
+      } catch (err) {
+        showStatus('Erreur suppression', 'error');
+      }
+    }
+
+    async function resetToAP() {
+      if (!confirm('Réinitialiser BimiPrint? Le système passera en mode configuration.')) return;
+
+      showStatus('Réinitialisation...', 'info');
+
+      try {
+        const res = await fetch('/api/reset', { method: 'POST' });
+        const data = await res.json();
+
+        if (data.success) {
+          showStatus('Réinitialisé! Reconnectez-vous au WiFi BimiPrint-XXXX', 'success');
+        } else {
+          showStatus(data.error || 'Erreur', 'error');
+        }
+      } catch (err) {
+        showStatus('Erreur réinitialisation', 'error');
+      }
+    }
+  </script>
+</body>
+</html>
