@@ -1,10 +1,24 @@
 # ThermalPrinter
 
-> Raspberry Pi print server for restaurants via WebSocket
+> Print to thermal printers from any web app — no native app required
 
 [![Node.js](https://img.shields.io/badge/Node.js-20+-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
 [![Raspberry Pi](https://img.shields.io/badge/Raspberry_Pi-Zero_2W+-C51A4A?logo=raspberry-pi&logoColor=white)](https://www.raspberrypi.com/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
+## The Problem
+
+Printing to thermal printers from web apps (PWA, React, etc.) is a nightmare:
+- Browsers can't talk directly to ESC/POS printers
+- WebUSB/WebSerial have limited support and permissions issues
+- Native apps require separate development and deployment
+- Cloud print services are expensive and add latency
+
+## The Solution
+
+A $20 Raspberry Pi acts as a bridge between your web backend and the printer. Your server sends print jobs via WebSocket, the Pi receives them and forwards to the thermal printer over TCP.
+
+**No native app. No browser plugins. Just works.**
 
 ## Features
 
