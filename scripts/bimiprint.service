@@ -1,0 +1,22 @@
+[Unit]
+Description=BimiPrint - Serveur d'impression thermique
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/bimiprint
+ExecStart=/usr/bin/node /opt/bimiprint/src/index.js
+Restart=always
+RestartSec=5
+
+# Watchdog désactivé (opérations WiFi peuvent prendre du temps)
+# WatchdogSec=60
+# NotifyAccess=all
+
+# Logs
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
