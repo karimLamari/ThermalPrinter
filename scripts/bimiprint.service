@@ -5,8 +5,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/opt/bimiprint
-ExecStart=/usr/bin/node /opt/bimiprint/src/index.js
+WorkingDirectory=/home/bimi/bimiprint
+ExecStart=/usr/bin/node /home/bimi/bimiprint/src/index.js
 Restart=always
 RestartSec=5
 

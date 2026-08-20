@@ -10,7 +10,8 @@ if [ -z "$1" ]; then
 fi
 
 PI_IP=$1
-PI_USER="pi"
+# Le compte du Pi est 'bimi' (créé par setup-pi.sh). Surchargeable via env PI_USER.
+PI_USER="${PI_USER:-bimi}"
 
 echo "=========================================="
 echo "  Déploiement BimiPrint vers le Pi"

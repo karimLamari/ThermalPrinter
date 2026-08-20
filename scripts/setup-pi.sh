@@ -24,7 +24,15 @@ set -e
 PI_IP=${1:-}
 RESTAURANT_CODE=${2:-}
 DOMAIN=${3:-}
+PRINTER_TYPE=${4:-usb}   # usb (câble, défaut) | network
 PI_USER="bimi"
+
+# Adresse imprimante selon le type
+if [ "$PRINTER_TYPE" = "usb" ]; then
+    PRINTER_ADDRESS="/dev/usb/lp0"
+else
+    PRINTER_ADDRESS=""
+fi
 
 if [ -z "$PI_IP" ] || [ -z "$RESTAURANT_CODE" ] || [ -z "$DOMAIN" ]; then
     echo ""
@@ -114,10 +122,10 @@ ssh "$PI_USER@$PI_IP" "cat > ~/bimiprint/.env << 'ENVEOF'
 # BimiPrint Configuration - $RESTAURANT_CODE
 VPS_URL=wss://$DOMAIN/print
 RESTAURANT_CODE=$RESTAURANT_CODE
-PRINTER_TYPE=network
-PRINTER_ADDRESS=
+PRINTER_TYPE=$PRINTER_TYPE
+PRINTER_ADDRESS=$PRINTER_ADDRESS
 ENVEOF"
-echo "✓ .env configuré (VPS_URL=wss://$DOMAIN/print, CODE=$RESTAURANT_CODE)"
+echo "✓ .env configuré (VPS_URL=wss://$DOMAIN/print, CODE=$RESTAURANT_CODE, IMPRIMANTE=$PRINTER_TYPE $PRINTER_ADDRESS)"
 echo ""
 
 # =============================================

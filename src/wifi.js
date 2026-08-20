@@ -5,9 +5,10 @@
  * Résout le conflit NetworkManager vs wpa_supplicant
  */
 
-const { exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 const util = require('util');
 const execAsync = util.promisify(exec);
+const execFileAsync = util.promisify(execFile);
 
 // Nom de la connexion hotspot
 const HOTSPOT_NAME = 'BimiPrint-Hotspot';
@@ -18,6 +19,22 @@ const HOTSPOT_NAME = 'BimiPrint-Hotspot';
 async function execSafe(command) {
   try {
     const { stdout } = await execAsync(command);
+    return { success: true, output: stdout.trim() };
+  } catch (err) {
+    return { success: false, error: err.message, output: err.stdout || '' };
+  }
+}
+
+/**
+ * Variante SANS shell (execFile) - obligatoire dès qu'un argument vient de
+ * l'utilisateur (SSID, mot de passe, nom de connexion). Aucune interpolation
+ * shell => pas d'injection de commande possible.
+ * @param {string} file - Binaire à exécuter (ex: 'sudo')
+ * @param {string[]} args - Arguments passés tels quels, jamais parsés par un shell
+ */
+async function execFileSafe(file, args) {
+  try {
+    const { stdout } = await execFileAsync(file, args);
     return { success: true, output: stdout.trim() };
   } catch (err) {
     return { success: false, error: err.message, output: err.stdout || '' };
@@ -90,7 +107,7 @@ async function listSavedConnections() {
  * @param {string} name - Nom de la connexion
  */
 async function deleteConnection(name) {
-  const result = await execSafe(`sudo nmcli connection delete "${name}"`);
+  const result = await execFileSafe('sudo', ['nmcli', 'connection', 'delete', name]);
   if (result.success) {
     console.log(`✓ Connexion "${name}" supprimée`);
   }
@@ -125,28 +142,32 @@ async function connectToWifi(ssid, password) {
     // Évite que le Pi se reconnecte à un ancien réseau (ex: hotspot iPhone du setup)
     await deleteAllWifiConnections();
 
-    // Créer la nouvelle connexion
-    let addCmd;
+    // Créer la nouvelle connexion (execFile = pas de shell, SSID/mot de passe
+    // passés en arguments bruts => aucune injection possible)
+    let addArgs;
     if (password && password.trim()) {
       // WiFi avec mot de passe WPA/WPA2
-      addCmd = `sudo nmcli connection add type wifi ifname wlan0 con-name "${ssid}" ssid "${ssid}" wifi-sec.key-mgmt wpa-psk wifi-sec.psk "${password}"`;
+      addArgs = ['nmcli', 'connection', 'add', 'type', 'wifi', 'ifname', 'wlan0',
+        'con-name', ssid, 'ssid', ssid,
+        'wifi-sec.key-mgmt', 'wpa-psk', 'wifi-sec.psk', password];
     } else {
       // WiFi ouvert (sans mot de passe)
-      addCmd = `sudo nmcli connection add type wifi ifname wlan0 con-name "${ssid}" ssid "${ssid}"`;
+      addArgs = ['nmcli', 'connection', 'add', 'type', 'wifi', 'ifname', 'wlan0',
+        'con-name', ssid, 'ssid', ssid];
     }
 
-    const addResult = await execSafe(addCmd);
+    const addResult = await execFileSafe('sudo', addArgs);
     if (!addResult.success) {
       console.error('Erreur création connexion:', addResult.error);
       return false;
     }
 
     // Activer la connexion
-    const upResult = await execSafe(`sudo nmcli connection up "${ssid}"`);
+    const upResult = await execFileSafe('sudo', ['nmcli', 'connection', 'up', ssid]);
     if (!upResult.success) {
       console.error('Erreur activation connexion:', upResult.error);
       // Supprimer la connexion ratée
-      await execSafe(`sudo nmcli connection delete "${ssid}"`);
+      await execFileSafe('sudo', ['nmcli', 'connection', 'delete', ssid]);
       return false;
     }
 
