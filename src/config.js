@@ -38,10 +38,41 @@ function loadConfig() {
   return { ...defaultConfig };
 }
 
+/**
+ * Écrit un fichier de façon durable : fsync du contenu avant de le rendre
+ * visible (rename atomique), puis fsync du dossier parent- sans quoi le
+ * rename lui-même peut ne pas survivre à une coupure de courant brutale
+ * (cas réel : redémarrer un Pi en debranchant l'alimentation plutôt qu'un
+ * arrêt propre, ce qu'on ne peut pas exiger du personnel d'un restaurant).
+ * writeFileSync seul laisse les données en cache OS le temps que le kernel
+ * décide de les flusher sur la carte SD- une coupure dans cette fenêtre
+ * perd la config silencieusement (le Pi redémarre en mode "jamais configuré").
+ */
+function writeFileDurable(filePath, content) {
+  const tmpPath = `${filePath}.tmp`;
+
+  const fd = fs.openSync(tmpPath, 'w');
+  try {
+    fs.writeSync(fd, content);
+    fs.fsyncSync(fd);
+  } finally {
+    fs.closeSync(fd);
+  }
+
+  fs.renameSync(tmpPath, filePath);
+
+  const dirFd = fs.openSync(path.dirname(filePath), 'r');
+  try {
+    fs.fsyncSync(dirFd);
+  } finally {
+    fs.closeSync(dirFd);
+  }
+}
+
 function saveConfig(config) {
   try {
     ensureConfigDir();
-    fs.writeFileSync(CONFIG_PATH, JSON.stringify(config, null, 2));
+    writeFileDurable(CONFIG_PATH, JSON.stringify(config, null, 2));
     return true;
   } catch (err) {
     console.error('Erreur sauvegarde config:', err.message);
