@@ -88,14 +88,22 @@ echo ""
 # =============================================
 # 1. Installation Node.js
 # =============================================
-echo "[1/6] Installation de Node.js 20..."
+echo "[1/6] Installation de Node.js 20 + npm..."
 ssh "$PI_USER@$PI_IP" "
-    if command -v node &> /dev/null; then
-        echo '✓ Node.js déjà installé:' \$(node --version)
+    if command -v node &> /dev/null && command -v npm &> /dev/null; then
+        echo '✓ Node.js + npm déjà installés:' \$(node --version)
     else
-        curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
-        sudo apt-get install -y nodejs
-        echo '✓ Node.js installé:' \$(node --version)
+        ARCH=\$(dpkg --print-architecture)
+        if [ \"\$ARCH\" = 'armhf' ] || [ \"\$ARCH\" = 'armel' ]; then
+            # NodeSource ne supporte pas le 32-bit (armhf/armel) -> paquets Debian.
+            # nodejs SANS npm sur Debian => on installe explicitement les deux.
+            sudo apt-get update
+            sudo apt-get install -y nodejs npm
+        else
+            curl -fsSL https://deb.nodesource.com/setup_20.x | sudo bash -
+            sudo apt-get install -y nodejs
+        fi
+        echo '✓ Node.js installé:' \$(node --version)' - npm:' \$(npm --version)
     fi
 "
 echo ""
@@ -126,6 +134,16 @@ PRINTER_TYPE=$PRINTER_TYPE
 PRINTER_ADDRESS=$PRINTER_ADDRESS
 ENVEOF"
 echo "✓ .env configuré (VPS_URL=wss://$DOMAIN/print, CODE=$RESTAURANT_CODE, IMPRIMANTE=$PRINTER_TYPE $PRINTER_ADDRESS)"
+
+# /etc/bimiprint/config.json avec configured:true — SINON index.js lance
+# startAPMode() au boot (isConfigured()=false) => le Pi bascule en hotspot,
+# quitte le WiFi et coupe le SSH pendant le provisioning.
+ssh "$PI_USER@$PI_IP" "
+    CUR_SSID=\$(iwgetid -r 2>/dev/null || true)
+    sudo mkdir -p /etc/bimiprint
+    printf '{\n  \"wifiSSID\": \"%s\",\n  \"wifiPassword\": \"\",\n  \"restaurantCode\": \"%s\",\n  \"printerType\": \"%s\",\n  \"printerAddress\": \"%s\",\n  \"configured\": true\n}\n' \"\${CUR_SSID:-PENDING}\" '$RESTAURANT_CODE' '$PRINTER_TYPE' '$PRINTER_ADDRESS' | sudo tee /etc/bimiprint/config.json >/dev/null
+    echo \"✓ config.json écrit (wifiSSID=\${CUR_SSID:-PENDING}, configured:true)\"
+"
 echo ""
 
 # =============================================

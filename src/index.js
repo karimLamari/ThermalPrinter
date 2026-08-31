@@ -22,7 +22,7 @@ const { connect: connectWebSocket } = require('./websocket');
 const { start: startPortal } = require('./portal');
 
 // Configuration
-const WIFI_TIMEOUT = 60; // Secondes avant de passer en mode secours
+const WIFI_TIMEOUT = 20; // Secondes avant de passer en mode secours (hotspot plus vite)
 const RETRY_INTERVAL = 60000; // Réessayer WiFi toutes les 60 secondes en mode secours
 
 console.log('');
@@ -57,6 +57,9 @@ async function startFallbackMode(config) {
 
       // Essayer de se connecter au WiFi configuré
       if (config.wifiSSID) {
+        // connectToWifi coupe l'AP (une seule radio wlan0). Si la reconnexion
+        // échoue, le hotspot resterait éteint => on le relance pour qu'il reste
+        // disponible en continu (sinon il "disparaît" après la 1ère tentative).
         const connected = await connectToWifi(config.wifiSSID, config.wifiPassword);
 
         if (connected && await hasInternet()) {
@@ -68,6 +71,10 @@ async function startFallbackMode(config) {
           setTimeout(() => {
             process.exit(0); // systemd va redémarrer le service
           }, 2000);
+        } else {
+          // Reconnexion ratée : réarmer le hotspot pour qu'il reste visible.
+          console.log('Reconnexion échouée, réouverture du hotspot...');
+          await startAPMode().catch((err) => console.error('Réouverture AP échouée:', err.message));
         }
       }
     }, RETRY_INTERVAL);
@@ -110,7 +117,7 @@ async function startNormalMode(config) {
  */
 function startConnectionMonitor(config) {
   let consecutiveFailures = 0;
-  const MAX_FAILURES = 3;
+  const MAX_FAILURES = 2;
 
   const monitor = setInterval(async () => {
     const internet = await hasInternet();
@@ -132,7 +139,7 @@ function startConnectionMonitor(config) {
       }
       consecutiveFailures = 0;
     }
-  }, 30000); // Vérifier toutes les 30 secondes
+  }, 15000); // Vérifier toutes les 15 secondes
 }
 
 /**
