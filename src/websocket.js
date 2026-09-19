@@ -1,5 +1,5 @@
 const WebSocket = require('ws');
-const { VPS_URL, loadConfig } = require('./config');
+const { VPS_URL, BIMIPRINT_TOKEN, loadConfig } = require('./config');
 const { print } = require('./printer');
 
 let ws = null;
@@ -25,12 +25,16 @@ function connect() {
     return;
   }
 
-  // Ajoute le code restaurant à l'URL
-  const url = `${VPS_URL}?code=${config.restaurantCode}`;
+  // Ajoute le code restaurant à l'URL. ack=1 : on confirme chaque impression au serveur
+  // (print:ack) → il ne marque un ticket "imprimé" que s'il est vraiment parti.
+  const url = `${VPS_URL}?code=${encodeURIComponent(config.restaurantCode)}&ack=1`;
 
   console.log(`Connexion WebSocket: ${VPS_URL}`);
 
-  ws = new WebSocket(url);
+  // Secret partagé en header (pas dans l'URL : les URLs finissent dans les logs du serveur)
+  const headers = BIMIPRINT_TOKEN ? { 'x-bimiprint-token': BIMIPRINT_TOKEN } : {};
+
+  ws = new WebSocket(url, { headers });
 
   ws.on('open', () => {
     console.log('✓ WebSocket connecté');
@@ -55,7 +59,7 @@ function connect() {
 
       if (message.type === 'print' && message.data) {
         console.log('📄 Job d\'impression reçu');
-        await print(message.data);
+        await handlePrintJob(message);
       } else if (message.type === 'connected') {
         console.log('✓ Enregistré sur le serveur');
       }
@@ -77,6 +81,30 @@ function connect() {
     // jamais 'close' ne se déclenchait pas dans ce cas précis.
     scheduleReconnect();
   });
+}
+
+/**
+ * Imprime un job et renvoie l'accusé de réception au serveur.
+ * jobId absent = ancien serveur : on imprime sans accusé, comme avant.
+ */
+async function handlePrintJob(message) {
+  let ack = { ok: true };
+  try {
+    await print(message.data);
+  } catch (err) {
+    // (print() a déjà journalisé l'erreur)
+    ack = { ok: false, error: err.message };
+  }
+
+  if (!message.jobId) return;
+
+  try {
+    if (ws && ws.readyState === WebSocket.OPEN) {
+      ws.send(JSON.stringify({ type: 'print:ack', jobId: message.jobId, ...ack }));
+    }
+  } catch (err) {
+    console.error('Envoi accusé de réception impossible:', err.message);
+  }
 }
 
 function startWatchdog() {

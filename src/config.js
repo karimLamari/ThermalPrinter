@@ -10,6 +10,9 @@ const VPS_URL = process.env.VPS_URL || 'wss://your-backend.com/print';
 const RESTAURANT_CODE = process.env.RESTAURANT_CODE || 'RESTAURANT';
 const PRINTER_TYPE = process.env.PRINTER_TYPE || 'network';
 const PRINTER_ADDRESS = process.env.PRINTER_ADDRESS || '';
+// Secret partagé avec le backend (header x-bimiprint-token). Vide = pas d'auth (ancien mode).
+// Uniquement dans .env : jamais dans config.json (modifiable depuis le portail web).
+const BIMIPRINT_TOKEN = process.env.BIMIPRINT_TOKEN || '';
 
 const defaultConfig = {
   wifiSSID: process.env.WIFI_SSID || '',
@@ -90,6 +93,7 @@ module.exports = {
   RESTAURANT_CODE,
   PRINTER_TYPE,
   PRINTER_ADDRESS,
+  BIMIPRINT_TOKEN,
   CONFIG_PATH,
   CONFIG_DIR,
   loadConfig,

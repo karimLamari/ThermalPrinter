@@ -15,25 +15,50 @@ function execAsync(command) {
   });
 }
 
-// Envoie des données ESC/POS via Bluetooth
-async function printBluetooth(data, macAddress) {
+// Délai max d'une écriture vers l'imprimante. Une imprimante hors ligne / sans papier peut
+// bloquer l'écriture indéfiniment : on coupe pour pouvoir le signaler au serveur (print:ack).
+const DEVICE_WRITE_TIMEOUT = 10000;
+
+/**
+ * Écrit des octets ESC/POS sur un périphérique caractère (/dev/usb/lp0, /dev/rfcomm0).
+ * Rejette si le périphérique est absent (imprimante éteinte/débranchée) ou si l'écriture
+ * ne se termine pas dans le délai.
+ */
+function writeToDevice(buffer, device, label) {
   return new Promise((resolve, reject) => {
-    // Utilise rfcomm pour envoyer via Bluetooth SPP
-    const command = `echo -n "${data}" | base64 -d | sudo rfcomm connect hci0 ${macAddress} 1`;
+    const stream = fs.createWriteStream(device);
+    let settled = false;
 
-    // Alternative: utiliser bluetoothctl et /dev/rfcomm0
-    const altCommand = `echo "${data}" | base64 -d > /dev/rfcomm0`;
-
-    exec(altCommand, { timeout: 10000 }, (error, stdout, stderr) => {
-      if (error) {
-        console.error('Erreur impression Bluetooth:', error.message);
-        reject(error);
+    const finish = (err) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      if (err) {
+        console.error(`Erreur impression ${label}:`, err.message);
+        stream.destroy();
+        reject(err);
       } else {
-        console.log('Impression Bluetooth OK');
+        stream.end();
+        console.log(`Impression ${label} OK`);
         resolve(true);
       }
-    });
+    };
+
+    const timer = setTimeout(
+      () => finish(new Error(`Imprimante ${label} bloquée (pas de réponse en ${DEVICE_WRITE_TIMEOUT / 1000}s)`)),
+      DEVICE_WRITE_TIMEOUT
+    );
+
+    stream.on('error', finish);
+    stream.write(buffer, (err) => finish(err || null));
   });
+}
+
+// Envoie des données ESC/POS via Bluetooth (port série /dev/rfcomm0 déjà appairé).
+// Écriture directe : les données ne transitent JAMAIS par un shell (l'ancien
+// `exec('echo "<data>" | base64 -d ...')` permettait une injection de commande).
+async function printBluetooth(data) {
+  return writeToDevice(Buffer.from(data, 'base64'), '/dev/rfcomm0', 'Bluetooth');
 }
 
 // Envoie des données ESC/POS via réseau (WiFi/Ethernet)
@@ -66,23 +91,7 @@ async function printNetwork(data, ipAddress) {
 
 // Envoie des données ESC/POS via USB (/dev/usb/lp*)
 async function printUSB(data, devicePath) {
-  const device = devicePath || '/dev/usb/lp0';
-
-  return new Promise((resolve, reject) => {
-    const buffer = Buffer.from(data, 'base64');
-    const stream = fs.createWriteStream(device);
-
-    stream.on('error', (err) => {
-      console.error('Erreur impression USB:', err.message);
-      reject(err);
-    });
-
-    stream.write(buffer, () => {
-      stream.end();
-      console.log('Impression USB OK');
-      resolve(true);
-    });
-  });
+  return writeToDevice(Buffer.from(data, 'base64'), devicePath || '/dev/usb/lp0', 'USB');
 }
 
 // Liste les imprimantes USB détectées (/dev/usb/lp*)
