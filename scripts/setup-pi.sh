@@ -156,6 +156,20 @@ ssh "$PI_USER@$PI_IP" "
     sudo usermod -aG lp $PI_USER
     echo '✓ Permissions USB (groupe lp) configurées'
 "
+
+# Portail captif : SANS ça, le restaurateur ne peut pas configurer son WiFi.
+# Le téléphone interroge captive.apple.com / connectivitycheck.gstatic.com pour
+# savoir si le réseau a internet. En mode hotspot le Pi n'en a pas, dnsmasq fait
+# suivre ces requêtes vers le vide, la résolution échoue, les routes de
+# portal.js (/generate_204, /hotspot-detect.html…) ne sont jamais atteintes, et
+# le téléphone conclut « réseau cassé » puis repart sur le WiFi du restaurant.
+# En renvoyant TOUS les domaines vers 192.168.4.1, le téléphone détecte un
+# portail captif, affiche « Se connecter au réseau » et RESTE connecté.
+ssh "$PI_USER@$PI_IP" "
+    sudo mkdir -p /etc/NetworkManager/dnsmasq-shared.d
+    echo 'address=/#/192.168.4.1' | sudo tee /etc/NetworkManager/dnsmasq-shared.d/captive.conf >/dev/null
+    echo '✓ Portail captif configuré (détournement DNS en mode hotspot)'
+"
 echo "✓ Dépendances installées"
 echo ""
 
