@@ -18,7 +18,8 @@ const {
   getWifiStatus,
   connectToWifi
 } = require('./wifi');
-const { connect: connectWebSocket } = require('./websocket');
+const { connect: connectWebSocket, sendEvent } = require('./websocket');
+const callerId = require('./callerId');
 const { start: startPortal } = require('./portal');
 
 // Configuration
@@ -104,6 +105,13 @@ async function startNormalMode(config) {
 
   // Connecter au VPS via WebSocket
   connectWebSocket();
+
+  // Identification des appels (seulement si un modem est branché sur la ligne)
+  callerId.start((call) => {
+    const who = call.number || (call.presentation === 'private' ? 'numéro masqué' : 'numéro indisponible');
+    console.log(`☎️  Appel entrant : ${who}`);
+    sendEvent({ type: 'call:incoming', ...call });
+  });
 
   console.log('');
   console.log('✓ Prêt à recevoir les impressions');

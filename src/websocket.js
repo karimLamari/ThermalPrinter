@@ -17,6 +17,14 @@ const STALE_THRESHOLD = 45000; // > 30s de ping serveur, avec marge
 let watchdogInterval = null;
 let lastPongAt = null;
 
+// Événements à remonter au serveur (appels entrants) quand le WebSocket est
+// momentanément coupé : renvoyés à la reconnexion, s'ils ne sont pas trop vieux
+// (un appel signalé 10 min après n'aide plus personne en direct, mais garde
+// sa place dans l'historique ; au-delà on abandonne).
+const MAX_PENDING_EVENTS = 20;
+const PENDING_EVENT_TTL = 10 * 60 * 1000;
+let pendingEvents = [];
+
 function connect() {
   const config = loadConfig();
 
@@ -47,6 +55,8 @@ function connect() {
       type: 'identify',
       code: config.restaurantCode
     }));
+
+    flushPendingEvents();
   });
 
   ws.on('pong', () => {
@@ -107,6 +117,30 @@ async function handlePrintJob(message) {
   }
 }
 
+/**
+ * Envoie un événement au serveur (ex. appel entrant), ou le met de côté si le
+ * WebSocket est coupé.
+ * @param {Object} event - doit contenir `type`
+ */
+function sendEvent(event) {
+  if (ws && ws.readyState === WebSocket.OPEN) {
+    try {
+      ws.send(JSON.stringify(event));
+      return;
+    } catch (err) {
+      console.error('Envoi événement impossible:', err.message);
+    }
+  }
+  pendingEvents.push({ event, queuedAt: Date.now() });
+  if (pendingEvents.length > MAX_PENDING_EVENTS) pendingEvents.shift();
+}
+
+function flushPendingEvents() {
+  const fresh = pendingEvents.filter((p) => Date.now() - p.queuedAt < PENDING_EVENT_TTL);
+  pendingEvents = [];
+  for (const { event } of fresh) sendEvent(event);
+}
+
 function startWatchdog() {
   stopWatchdog();
   watchdogInterval = setInterval(() => {
@@ -164,5 +198,6 @@ function isConnected() {
 module.exports = {
   connect,
   disconnect,
-  isConnected
+  isConnected,
+  sendEvent
 };
