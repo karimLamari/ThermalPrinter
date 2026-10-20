@@ -13,12 +13,14 @@
 const { isConfigured, loadConfig } = require('./config');
 const {
   startAPMode,
+  stopAPMode,
   waitForInternet,
   hasInternet,
   getWifiStatus,
   connectToWifi
 } = require('./wifi');
-const { connect: connectWebSocket, sendEvent } = require('./websocket');
+const { connect: connectWebSocket, sendEvent, isConnected } = require('./websocket');
+const serverWatchdog = require('./serverWatchdog');
 const callerId = require('./callerId');
 const { start: startPortal } = require('./portal');
 
@@ -54,6 +56,17 @@ async function startFallbackMode(config) {
     console.log(`Retry automatique toutes les ${RETRY_INTERVAL / 1000}s...`);
 
     const retryInterval = setInterval(async () => {
+      // Internet revenu par un autre chemin (câble réseau) : inutile d'attendre
+      // le WiFi, on repasse en mode normal. Sans ça, un Pi branché en câble
+      // dont le WiFi est absent restait bloqué en mode secours (Rajpoot).
+      if (await hasInternet()) {
+        console.log('✓ Internet disponible (câble ou WiFi) : retour en mode normal...');
+        clearInterval(retryInterval);
+        await stopAPMode().catch((err) => console.error('Arrêt AP échoué:', err.message));
+        setTimeout(() => process.exit(0), 1000); // systemd relance → mode normal
+        return;
+      }
+
       console.log('Tentative reconnexion WiFi...');
 
       // Essayer de se connecter au WiFi configuré
@@ -118,6 +131,9 @@ async function startNormalMode(config) {
 
   // Surveiller la connexion internet
   startConnectionMonitor(config);
+
+  // Filet de sécurité : internet OK mais plus relié au serveur → redémarrage
+  serverWatchdog.start({ isConnected, hasInternet });
 }
 
 /**

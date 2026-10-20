@@ -185,6 +185,18 @@ ssh "$PI_USER@$PI_IP" "
 "
 sleep 3
 echo "✓ Service installé et démarré"
+
+# Journaux conservés après redémarrage (taille bornée pour ménager la carte SD) :
+# sans ça, on ne sait jamais pourquoi un Pi s'est bloqué avant d'être rebranché.
+# Chien de garde matériel : si le Pi se fige complètement, il redémarre seul.
+ssh "$PI_USER@$PI_IP" "
+    sudo mkdir -p /var/log/journal /etc/systemd/journald.conf.d /etc/systemd/system.conf.d
+    printf '[Journal]\nStorage=persistent\nSystemMaxUse=30M\n' | sudo tee /etc/systemd/journald.conf.d/bimiprint.conf >/dev/null
+    printf '[Manager]\nRuntimeWatchdogSec=15\n' | sudo tee /etc/systemd/system.conf.d/bimiprint-watchdog.conf >/dev/null
+    sudo systemctl restart systemd-journald
+    sudo systemctl daemon-reexec
+"
+echo "✓ Journaux conservés + chien de garde matériel"
 echo ""
 
 # =============================================
