@@ -195,8 +195,13 @@ ssh "$PI_USER@$PI_IP" "
     printf '[Manager]\nRuntimeWatchdogSec=15\n' | sudo tee /etc/systemd/system.conf.d/bimiprint-watchdog.conf >/dev/null
     sudo systemctl restart systemd-journald
     sudo systemctl daemon-reexec
+    # ModemManager interroge tout modem branché (au démarrage, à chaque
+    # rebranchement) et entre en conflit avec le modem d'identification
+    # d'appel : modem figé ou réglages effacés (Rajpoot, 2026-10-22).
+    sudo systemctl disable --now ModemManager >/dev/null 2>&1 || true
+    sudo systemctl mask ModemManager >/dev/null 2>&1 || true
 "
-echo "✓ Journaux conservés + chien de garde matériel"
+echo "✓ Journaux conservés + chien de garde matériel + ModemManager coupé"
 echo ""
 
 # =============================================
